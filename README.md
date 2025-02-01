@@ -53,8 +53,4 @@ http://localhost:5173
 
 ## Demo Video
 
-https://github.com/vikasyadav01234/quiz-app/assets/demo.mp4
-
-Watch the application in action to see its features and functionality.
-
-![Demo Video](demo.gif)
+[![Watch the video]()](https://youtu.be/ZZPi58c38T8?si=_ZciU00Ba-oEKx3z)
