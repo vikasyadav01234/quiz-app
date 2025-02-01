@@ -4,14 +4,39 @@ import "./App.css";
 function App() {
   const [data, setData] = useState([]);
   const [activeQuestion, setActiveQuestion] = useState(0);
-  const [quizStatus, setQuizStatus] = useState("init"); // Changed from 'start' to 'init'
+  const [quizStatus, setQuizStatus] = useState("init");
   const [questions, setQuestions] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [currentUser] = useState("vikasyadav01234");
+  const [startTime] = useState("2025-02-01 10:16:58");
   const [score, setScore] = useState({
     correct: 0,
     incorrect: 0,
     total: 0,
   });
+
+  // Timer format helper function
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+
+  // Timer Display Component
+  const TimerDisplay = ({ seconds }) => {
+    return (
+      <div className="fixed top-4 right-4 bg-white p-3 rounded-lg shadow-lg">
+        <div className="text-center">
+          <p className="text-sm text-gray-500">Time Remaining</p>
+          <p className={`text-2xl font-bold ${seconds <= 60 ? 'text-red-500 timer-warning' : 'text-blue-500'}`}>
+            {formatTime(seconds)}
+          </p>
+        </div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     (async () => {
@@ -23,6 +48,33 @@ function App() {
       setQuestions(data?.questions);
     })();
   }, []);
+
+  // Timer Effect
+  useEffect(() => {
+    let timerInterval;
+
+    if (timerActive && timeLeft > 0) {
+      timerInterval = setInterval(() => {
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(timerInterval);
+            setTimerActive(false);
+            const finalScore = calculateScore(selectedAnswers);
+            setScore(finalScore);
+            setQuizStatus("end");
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+    };
+  }, [timerActive, timeLeft]);
 
   const calculateScore = (answers) => {
     let correct = 0;
@@ -63,6 +115,7 @@ function App() {
 
   const handleEndQuiz = () => {
     if (selectedAnswers[activeQuestion]) {
+      setTimerActive(false);
       const finalScore = calculateScore(selectedAnswers);
       setScore(finalScore);
       setQuizStatus("end");
@@ -74,6 +127,8 @@ function App() {
     setActiveQuestion(0);
     setSelectedAnswers({});
     setScore({ correct: 0, incorrect: 0, total: 0 });
+    setTimeLeft(data.duration * 60);
+    setTimerActive(true);
   };
 
   // Start Screen
@@ -85,10 +140,10 @@ function App() {
           <div className="bg-white p-6 rounded-lg shadow-lg space-y-4">
             <div className="space-y-2">
               <p className="text-xl font-semibold">{data.topic}</p>
-              <p className="text-gray-600">
-                Total Questions: {questions.length}
-              </p>
+              <p className="text-gray-600">Total Questions: {questions.length}</p>
               <p className="text-gray-600">Duration: {data.duration} minutes</p>
+              <p className="text-sm text-gray-500">User: {currentUser}</p>
+              <p className="text-sm text-gray-500">Started at: {startTime}</p>
             </div>
             <div className="space-y-2 text-sm text-gray-600">
               <p>Correct Answer: +{data.correct_answer_marks} marks</p>
@@ -118,6 +173,10 @@ function App() {
       <main className="p-4 max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">Quiz Results</h1>
         <div className="space-y-4 bg-white p-6 rounded-lg shadow">
+          <div className="text-sm text-gray-500 mb-4">
+            <p>User: {currentUser}</p>
+            <p>Completed at: {new Date().toISOString().slice(0, 19).replace('T', ' ')}</p>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-green-100 p-4 rounded">
               <h3 className="font-semibold">Correct Answers</h3>
@@ -158,12 +217,20 @@ function App() {
   // Quiz Screen
   return (
     <main className="p-4 max-w-2xl mx-auto">
+      {/* Timer Display */}
+      {quizStatus === "start" && timeLeft > 0 && (
+        <TimerDisplay seconds={timeLeft} />
+      )}
+
       <h1 className="text-2xl font-bold mb-4">{data.title || "Quiz App"}</h1>
       {questions.length > 0 && (
         <div className="space-y-4">
-          <div className="mb-4">
+          <div className="mb-4 flex justify-between items-center">
             <p className="text-sm text-gray-500">
               Question {activeQuestion + 1} of {questions.length}
+            </p>
+            <p className="text-sm text-gray-500">
+              User: {currentUser}
             </p>
           </div>
 
